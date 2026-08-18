@@ -1,0 +1,230 @@
+*{
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+font-family: 'Segoe UI', sans-serif;
+}
+
+body{
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #2980b9, #6dd5fa);
+    color: #ffffff;
+}
+
+.cartao-clima{
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(12px);
+    max-width: 420px;
+    width: 100%;
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+header{
+  display: flex;
+  gap: 10px;
+}
+
+header input{
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}  
+
+header input::placeholder{
+    color:rgba(255, 255, 255, 0.7);
+}
+
+.btn-busca{
+    padding: 12px 20px;
+    border-radius: 12px;
+    border: none;
+    background: #ffffff;
+    color: #333;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.mensagem-erro{
+    color: #ff6b6b;
+    font-size: 0.85rem;
+    text-align: center;
+    display: none;
+}
+
+.cidade{
+    font-size: 1.8rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.data{
+    font-size: 0.85rem;
+    text-align: center;
+    opacity: 0.8;
+    margin-top: -15px;
+}
+
+.clima-principal{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.icone-clima{
+    width: 90px;
+    height: 90px;
+    object-fit: contain;
+}
+
+.temperatura{
+    font-size: 3.2rem;
+    font-weight: 700;
+}
+
+.descricao{
+    font-size: 1.1rem;
+    text-transform: capitalize;
+}
+
+.detalhes{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 16px;
+    font-size: 0.85rem;
+}
+
+.detalhes p{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.previsao-horaria h2{
+    font-size: 1rem;
+    margin-bottom: 10px;
+    opacity: 0.9;
+}   
+
+.container-horas{
+    display: flex;
+    overflow-x: auto;
+    gap: 12px;
+    padding-bottom: 8px;
+}
+
+.card-hora{
+    min-width: 70px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px;
+    border-radius: 12px;
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    gap: 6px;
+    font-size: 0.8rem;
+}
+
+.icone-hora{
+    width: 35px;
+    height: 35px;
+}
+
+.alertas-cuidados{
+    display: flex; 
+    flex-direction: column; 
+    gap: 12px;
+}
+
+.seletor-perfil{
+    display: flex;
+    justify-content: space-between; 
+    gap: 8px;
+}
+
+.btn-perfil{
+    flex: 1;
+    padding: 8px 4px;
+    border-radius: 10px;
+    border: none;
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.btn-perfil.active {
+    background: #ffffff;
+    color: #222;
+    font-weight: bold;
+}
+
+.card-alerta {
+    background: rgba(255, 255, 255, 0.1);
+    border-left: 4px solid #ffd166;
+    padding: 12px 16px;
+    border-radius: 8px 12px 12px 8px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.btn-localizacao {
+    padding: 12px;
+    border-radius: 12px;
+    border: none;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: background 0.3s;
+}
+
+.btn-localizacao:hover {
+    background: rgba(255, 255, 255, 0.35);
+}
+
+
+/* ==========================================================================
+   TEMAS DINÂMICOS DO CLIMA (Aplicados no <body> via JS)
+   ========================================================================== */
+
+/* Tema Dia (Sol / Céu Limpo) */
+body.tema-dia {
+    background: linear-gradient(135deg, #2980b9, #6dd5fa);
+}
+
+/* Tema Tarde / Entardecer */
+body.tema-tarde {
+    background: linear-gradient(135deg, #f39c12, #d35400);
+}
+
+/* Tema Noite */
+body.tema-noite {
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+}
+
+/* Tema Chuva / Tempestade */
+body.tema-chuva {
+    background: linear-gradient(135deg, #373b44, #4286f4);
+}
+
+/* Tema Nublado / Névoa */
+body.tema-nublado {
+    background: linear-gradient(135deg, #757f9a, #d7edd4);
+}
