@@ -227,6 +227,133 @@ header input::placeholder{
     filter: drop-shadow(0px 4px 8px rgba(0, 0, 0, 0.2));
 }
 
+.container-grafico {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 20px;
+  margin-top: 20px;
+  color: #fff;
+}
+
+.container-grafico h3 {
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+canvas#graficoTemperatura {
+  width: 100% !important;
+  max-height: 250px;
+}
+
+/* Overlay que escurece o fundo */
+.modal-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(0, 0, 0, 0.7) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 99999 !important;
+}
+
+.modal-overlay.escondido {
+  display: none !important;
+}
+
+/* Caixa onde fica o texto e botões */
+.modal-conteudo {
+  background: rgba(20, 25, 45, 0.85) !important; /* Fundo escuro elegante para o texto não sumir */
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  padding: 30px 25px !important;
+  border-radius: 24px !important;
+  width: 90% !important;
+  max-width: 420px !important;
+  color: #ffffff !important;
+  position: relative !important;
+  text-align: center !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* ==========================================
+   BOTÃO DE LÂMPADA (Gordinho & Redondo)
+   ========================================== */
+.btn-circulo-info {
+  width: 50px !important;
+  height: 50px !important;
+  border-radius: 50% !important; /* Deixa 100% redondo */
+  border: 2px solid rgba(255, 255, 255, 0.4) !important;
+  background: rgba(255, 255, 255, 0.25) !important;
+  backdrop-filter: blur(10px) !important;
+  color: #fff !important;
+  font-size: 1.4rem !important;
+  cursor: pointer !important;
+  
+  /* Centralização do ícone */
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  
+  /* Sombra para dar o efeito "gordinho/estufado" */
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2), 
+              inset 0 2px 4px rgba(255, 255, 255, 0.4) !important;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+/* Efeito de clique e hover */
+.btn-circulo-info:hover {
+  transform: scale(1.12) !important; /* Dá um leve "pulo" ao passar o mouse */
+  background: rgba(255, 255, 255, 0.4) !important;
+}
+
+.btn-circulo-info:active {
+  transform: scale(0.95) !important;
+}
+
+
+/* ==========================================
+   BOTÃO DE FECHAR "X" (Gordinho & Redondo)
+   ========================================== */
+.btn-fechar-modal {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 50% !important; /* Deixa 100% redondo */
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(8px) !important;
+  color: #fff !important;
+  font-size: 1.2rem !important;
+  font-weight: bold !important;
+  cursor: pointer !important;
+
+  /* Posicionamento no canto superior do modal */
+  position: absolute !important;
+  top: 15px !important;
+  right: 15px !important;
+
+  /* Centralização perfeita do "X" */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-fechar-modal:hover {
+  background: rgba(255, 80, 80, 0.7) !important; /* Acontece um brilho vermelho suave no 'X' */
+  transform: scale(1.1) rotate(90deg) !important; /* Gira o X ao passar o mouse */
+}
+
 /* ==========================================================================
    TEMAS DINÂMICOS DO CLIMA (Aplicados no <body> via JS)
    ========================================================================== */

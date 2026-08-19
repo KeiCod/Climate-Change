@@ -5,6 +5,10 @@ const inputCidade = document.querySelector('header input');
 const btnBusca = document.querySelector('.btn-busca');
 const btnLocalizacao = document.querySelector('.btn-localizacao');
 const msgErro = document.querySelector('.mensagem-erro');
+const elValorUV = document.querySelector('#valor-uv');
+const elAlertaUV = document.querySelector('#alerta-uv');
+const ctxGrafico = document.getElementById('graficoTemperatura');
+let meuGrafico = null; // Guardará a instância do Chart.js para podermos atualizar
 
 // Elementos Principais do Clima
 const elementoCidade = document.querySelector('.cidade');
@@ -67,6 +71,21 @@ const eventosAstronomicos = [
 /* ==========================================================================
    3. REQUISIÇÕES DA API (FETCH)
    ========================================================================== */
+// Busca o Índice UV pelas coordenadas
+// Altere a chamada na função buscarIndiceUV:
+async function buscarIndiceUV(lat, lon, codigoIcone) {
+    try {
+        const url = `https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${CHAVE_API}`;
+        const resposta = await fetch(url);
+
+        if (!resposta.ok) return;
+
+        const dados = await resposta.json();
+        atualizarCardUV(dados.value, codigoIcone);
+    } catch (erro) {
+        console.error('Erro ao buscar Índice UV:', erro);
+    }
+}
 
 // Busca dados do clima por nome da cidade
 async function buscarDadosClima(cidade) {
@@ -89,18 +108,82 @@ async function buscarDadosClima(cidade) {
 
 // Busca previsão horária
 async function buscarPrevisaoHoraria(cidade) {
-    try {
-        const url = `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(cidade)}&units=metric&lang=pt_br&appid=${CHAVE_API}`;
-        const resposta = await fetch(url);
-        
-        if (!resposta.ok) return;
+  try {
+    const url = `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(cidade)}&units=metric&lang=pt_br&appid=${CHAVE_API}`;
+    const resposta = await fetch(url);
+    
+    if (!resposta.ok) return;
 
-        const dados = await resposta.json();
-        renderizarPrevisaoHoraria(dados.list);
-    } catch (erro) {
-        console.error('Erro ao buscar previsão horária:', erro);
-    }
+    const dados = await resposta.json();
+    
+    renderizarPrevisaoHoraria(dados.list);
+    
+    // 🚀 ADICIONE ESTA LINHA AQUI:
+    renderizarGraficoTemperatura(dados.list);
+
+  } catch (erro) {
+    console.error('Erro ao buscar previsão horária:', erro);
+  }
 }
+
+// Função para renderizar/atualizar o gráfico de temperatura
+function renderizarGraficoTemperatura(listaHoras) {
+  if (!ctxGrafico) return;
+
+  // Pegamos as próximas 8 previsões (24 horas)
+  const proximasHoras = listaHoras.slice(0, 8);
+
+  // Extrai os horários (Ex: "12:00") e as temperaturas redondeadas
+  const labels = proximasHoras.map(item => {
+    return new Date(item.dt * 1000).toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  });
+
+  const temperaturas = proximasHoras.map(item => Math.round(item.main.temp));
+
+  // Se o gráfico já existir na tela, destruímos para desenhar o novo sem sobreposição
+  if (meuGrafico) {
+    meuGrafico.destroy();
+  }
+
+  // Criação do Gráfico com estilo personalizado
+  meuGrafico = new Chart(ctxGrafico, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Temperatura (°C)',
+        data: temperaturas,
+        borderColor: '#ffffff',
+        backgroundColor: 'rgba(255, 255, 255, 0.15)',
+        fill: true,
+        tension: 0.4, // Curva suave na linha
+        borderWidth: 3,
+        pointBackgroundColor: '#ffffff',
+        pointRadius: 5
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false } // Esconde a legenda para ficar limpo
+      },
+      scales: {
+        x: {
+          ticks: { color: '#ffffff' },
+          grid: { display: false }
+        },
+        y: {
+          ticks: { color: '#ffffff' },
+          grid: { color: 'rgba(255, 255, 255, 0.1)' }
+        }
+      }
+    }
+  });
+}
+
 
 // Busca clima via Geolocalização
 async function buscarClimaPorCoordenadas(lat, lon) {
@@ -178,6 +261,45 @@ function atualizarInterface(dados) {
     atualizarAlertaCuidados(perfilAtivo);
     
     atualizarCardAstronomia(dados);
+
+    // Busca o UV se houver coordenadas
+    if (dados.coord) {
+        buscarIndiceUV(dados.coord.lat, dados.coord.lon);
+    }
+    if (dados.coord) {
+        buscarIndiceUV(dados.coord.lat, dados.coord.lon, dados.weather[0].icon);
+    }
+}
+
+// Classifica o índice UV de acordo com a OMS
+function atualizarCardUV(valorUV, codigoIcone = '') {
+    if (!elValorUV) return;
+
+    // Se o ícone for de noite ('n' no final), o UV é obrigatoriamente 0
+    const ehNoite = codigoIcone.endsWith('n');
+    const uv = ehNoite ? 0 : (valorUV !== undefined ? Math.round(valorUV) : 0);
+
+    elValorUV.textContent = uv;
+
+    if (!elAlertaUV) return;
+
+    let textoAlerta = '';
+
+    if (uv === 0) {
+        textoAlerta = '🌙 Sem radiação UV no momento (Noite).';
+    } else if (uv <= 2) {
+        textoAlerta = '🟢 Baixo - Seguro para ficar ao ar livre.';
+    } else if (uv <= 5) {
+        textoAlerta = '🟡 Moderado - Use protetor solar e óculos.';
+    } else if (uv <= 7) {
+        textoAlerta = '🟠 Alto - Busque sombra no meio do dia!';
+    } else if (uv <= 10) {
+        textoAlerta = '🔴 Muito Alto - Evite exposição direta ao sol!';
+    } else {
+        textoAlerta = '🟣 Extremo - Proteção máxima necessária!';
+    }
+
+    elAlertaUV.textContent = textoAlerta;
 }
 
 // Renderiza a previsão das próximas horas
@@ -318,7 +440,7 @@ function calcularFaseLua(data = new Date()) {
 
 function avaliarObservacaoCeu(porcentagemNuvens) {
     if (porcentagemNuvens <= 15) {
-        return "✨ Excelente! Céu limpo para ver constelações.";
+        return "Excelente ✨ Céu limpo para ver constelações.";
     } else if (porcentagemNuvens <= 50) {
         return "🌤️ Moderada. Nuvens esparsas no céu.";
     } else {
@@ -406,4 +528,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const cidadeSalva = localStorage.getItem('ultimaCidade') || 'São Paulo';
     inputCidade.value = cidadeSalva;
     buscarClima();
+});
+
+// Seletores do Modal
+const btnInfoCuidados = document.querySelector('#btn-info-cuidados');
+const modalCuidados = document.querySelector('#modal-cuidados');
+const btnFecharModal = document.querySelector('.btn-fechar-modal');
+
+// Abrir o Modal ao clicar na bolinha
+if (btnInfoCuidados) {
+    btnInfoCuidados.addEventListener('click', () => {
+        modalCuidados.classList.remove('escondido');
+        const perfilAtivo = document.querySelector('.botoes-perfil-modal .btn-perfil.active')
+            ? document.querySelector('.botoes-perfil-modal .btn-perfil.active').textContent.toLowerCase()
+            : 'pet';
+        atualizarAlertaCuidados(perfilAtivo);
+    });
+}
+
+// Fechar o Modal no botão X
+if (btnFecharModal) {
+    btnFecharModal.addEventListener('click', () => {
+        modalCuidados.classList.add('escondido');
+    });
+}
+
+// Fechar o Modal se clicar na área escura fora da caixa
+window.addEventListener('click', (event) => {
+    if (event.target === modalCuidados) {
+        modalCuidados.classList.add('escondido');
+    }
 });

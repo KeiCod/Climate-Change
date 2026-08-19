@@ -1,73 +1,103 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Climate-Change</title>
-        <link rel="stylesheet" href="style.css">
-    </head>
 
-    <body>
-        <main class="cartao-clima">
-            <header>
-                <input type="text" placeholder="Digite a cidade">
-                <button class="btn-busca">
-                    <span class="texto-btn">Buscar</span>
-                </button>
-                <button class="btn-localizacao" title="Usar minha localização">📍</button>
-            </header>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Climate-Change</title>
+    <link rel="stylesheet" href="style.css">
+</head>
 
-            <p class="mensagem-erro"></p>
-            <h1 class="cidade">Digite uma cidade...</h1>
-            <p class="data">Data: --/--/----</p>
+<body>
+    <main class="cartao-clima">
+        <header>
+            <input type="text" placeholder="Digite a cidade">
+            <button class="btn-busca">
+                <span class="texto-btn">Buscar</span>
+            </button>
+            <button class="btn-localizacao" title="Usar minha localização">📍</button>
+        </header>
 
-            <section class="clima-principal">
-                <img src="" alt="Ícone do tempo" class="icone-clima">
-                <span class="temperatura">--°C</span>
-                <p class="descricao">Carregando...</p>
-            </section>
+        <p class="mensagem-erro"></p>
+        <h1 class="cidade">Digite uma cidade...</h1>
+        <p class="data">Data: --/--/----</p>
 
-            <section class="detalhes">
-                <p class="umidade">Umidade: --%</p>
-                <p class="vento">Vento: -- km/h</p>
-                <p class="por-sol">Pôr do Sol: --:--</p>
-                <p class="nascer-lua">Nascer da Lua: --:--</p>
-            </section>
+        <section class="clima-principal">
+            <img src="" alt="Ícone do tempo" class="icone-clima">
+            <span class="temperatura">--°C</span>
+            <p class="descricao">Carregando...</p>
+        </section>
 
-            <section class="previsao-horaria">
-                <h2>Próximas Horas</h2>
-                <div class="container-horas">
-                    <div class="card-hora">
-                        <span class="hora">15:00</span>
-                        <img src="" alt="Sol" class="icone-hora">
-                        <span class="temp-hora">25°C</span>
+        <section class="detalhes">
+            <p class="umidade">Umidade: --%</p>
+            <p class="vento">Vento: -- km/h</p>
+            <p class="por-sol">Pôr do Sol: --:--</p>
+            <p class="nascer-lua">Nascer da Lua: --:--</p>
+            <div class="card-uv">
+                <p class="detalhe-uv">☀️ Índice UV: <span id="valor-uv">0</span></p>
+            </div>
+        </section>
+
+        <section class="previsao-horaria">
+            <h2>Próximas Horas</h2>
+            <div class="container-horas">
+                <div class="card-hora">
+                    <span class="hora">15:00</span>
+                    <img src="" alt="Sol" class="icone-hora">
+                    <span class="temp-hora">25°C</span>
+                </div>
+            </div>
+            <div class="container-grafico">
+                <h3>Variação de Temperatura</h3>
+                <canvas id="graficoTemperatura"></canvas>
+            </div>
+        </section>
+
+        <section class="alertas-cuidados">
+                <!-- Subtempo / Ações discretas -->
+                <div class="acoes-extras">
+                    <!-- Botão circular discreto -->
+                    <button id="btn-info-cuidados" class="btn-circulo-info" title="Cuidados e Dicas">
+                        💡
+                    </button>
+                </div>
+
+                <div class="card-astronomia">
+                    <h2>Guia do Céu Noturno!</h2>
+                    <div class="info-astronomia">
+                        <p class="fase-lua">🌙 Fase da Lua: <span>Carregando...</span></p>
+                        <p class="visibilidade-ceu">🔭 Visibilidade do céu: <span>-</span></p>
+                        <div class="proximo-evento">
+                            <strong>📅 Próximo Evento Raro:</strong>
+                            <p id="texto-evento">Buscando eventos da região...</p>
+                        </div>
                     </div>
                 </div>
             </section>
+        </main> <!-- Fechamento correto do cartão principal -->
 
-            <section class="alertas-cuidados">
-                <div class="seletor-perfil">
-                    <button class="btn-perfil active">🐾 Pet</button>
-                    <button class="btn-perfil">👶 Bebê</button>
-                    <button class="btn-perfil">👵 Idoso</button>
+        <!-- MODAL DE CUIDADOS (Agora 100% isolado do main) -->
+        <div id="modal-cuidados" class="modal-overlay escondido">
+            <div class="modal-conteudo">
+                <button class="btn-fechar-modal">&times;</button>
+                
+                <h3>💡 Recomendações e Cuidados</h3>
+                <p class="modal-subtitulo">Escolha um perfil para ver as dicas do clima atual:</p>
+
+                <div class="botoes-perfil-modal">
+                    <button class="btn-perfil active">Pet</button>
+                    <button class="btn-perfil">Bebê</button>
+                    <button class="btn-perfil">Idoso</button>
                 </div>
+
                 <div class="card-alerta">
-                    <p class="mensagem-alerta">Carregando dicas de cuidados para o clima atual...</p>
+                    <!-- O texto das dicas entra aqui dentro -->
                 </div>
-                <div class="card-astronomia">
-                    <h2>✨ Eventos Astronômicos e Céu</h2>
-                <div class="info-astronomia">
-                    <p class="fase-lua">🌙 Fase da Lua: <span>Carregando...</span></p>
-                    <p class="visibilidade-ceu">🔭 Visibilidade para Observação: <span>-</span></p>
-                <div class="proximo-evento">
-                    <strong>📅 Próximo Evento Raro:</strong>
-                    <p id="texto-evento">Buscando eventos da região...</p>
-                </div>
-                </div>
-                </div>
-        </section>
-        </main>
+            </div>
+        </div>
 
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script src="script.js"></script>
-    </body>
+</body>
+
 </html>
