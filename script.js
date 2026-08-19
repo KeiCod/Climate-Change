@@ -1,54 +1,93 @@
-// 1. Elementos do Cabeçalho e Mensagens
+/* ==========================================================================
+   1. ELEMENTOS DO DOM
+   ========================================================================== */
 const inputCidade = document.querySelector('header input');
 const btnBusca = document.querySelector('.btn-busca');
+const btnLocalizacao = document.querySelector('.btn-localizacao');
 const msgErro = document.querySelector('.mensagem-erro');
 
-// 2. Elementos Principais do Clima
+// Elementos Principais do Clima
 const elementoCidade = document.querySelector('.cidade');
 const elementoData = document.querySelector('.data');
 const iconeClima = document.querySelector('.icone-clima');
 const elementoTemperatura = document.querySelector('.temperatura');
 const elementoDescricao = document.querySelector('.descricao');
 
-// 3. Elementos da Grade de Detalhes
+// Elementos de Detalhes
 const elementoUmidade = document.querySelector('.detalhes p:nth-child(1)');
 const elementoVento = document.querySelector('.detalhes p:nth-child(2)');
 const elementoPorSol = document.querySelector('.detalhes p:nth-child(3)');
 const elementoNascerLua = document.querySelector('.detalhes p:nth-child(4)');
 
-// 4. Seções de Carrossel e Cuidados
+// Seções e Controles
 const containerHoras = document.querySelector('.container-horas');
 const botoesPerfil = document.querySelectorAll('.btn-perfil');
 const cardAlerta = document.querySelector('.card-alerta');
 
-// Chave da API OpenWeatherMap
-const CHAVE_API = '5f58cf35d7236108d717dbcf26fe6c57';
+// Elementos de Astronomia
+const elFaseLua = document.querySelector('.fase-lua span');
+const elVisibilidadeCeu = document.querySelector('.visibilidade-ceu span');
+const elTextoEvento = document.querySelector('#texto-evento');
 
-// Variável para armazenar a temperatura atual globalmente (usada nos alertas)
+/* ==========================================================================
+   2. CONFIGURAÇÕES, MAPEAMENTOS E ESTADO GLOBAL
+   ========================================================================== */
+const CHAVE_API = '5f58cf35d7236108d717dbcf26fe6c57';
 let temperaturaAtual = 25;
 
-// 5. Função assíncrona para buscar os dados do clima atual na API
+// Mapeamento para SVGs animados via CDN (Bas Milius Meteocons)
+const mapaIconesAnimados = {
+    '01d': 'clear-day.svg',
+    '01n': 'clear-night.svg',
+    '02d': 'partly-cloudy-day.svg',
+    '02n': 'partly-cloudy-night.svg',
+    '03d': 'cloudy.svg',
+    '03n': 'cloudy.svg',
+    '04d': 'overcast-day.svg',
+    '04n': 'overcast-night.svg',
+    '09d': 'drizzle.svg',
+    '09n': 'drizzle.svg',
+    '10d': 'rain.svg',
+    '10n': 'rain.svg',
+    '11d': 'thunderstorms-day.svg',
+    '11n': 'thunderstorms-night.svg',
+    '13d': 'snow.svg',
+    '13n': 'snow.svg',
+    '50d': 'mist.svg',
+    '50n': 'mist.svg'
+};
+
+const eventosAstronomicos = [
+    { nome: "Chuva de Meteoros Perseidas", data: "12-08", desc: "Pico de chuva de meteoros com até 100 rastros por hora visíveis a olho nu." },
+    { nome: "Superlua / Lua Cheia", data: "17-09", desc: "A Lua estará em seu ponto mais próximo da Terra, parecendo maior e mais brilhante." },
+    { nome: "Eclipse Solar Anular", data: "02-10", desc: "A Lua passará entre a Terra e o Sol, criando o famoso efeito 'Anel de Fogo'." },
+    { nome: "Chuva de Meteoros Gemínidas", data: "14-12", desc: "Uma das chuvas de meteoros mais intensas e brilhantes do ano." }
+];
+
+/* ==========================================================================
+   3. REQUISIÇÕES DA API (FETCH)
+   ========================================================================== */
+
+// Busca dados do clima por nome da cidade
 async function buscarDadosClima(cidade) {
     try {
         const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(cidade)}&units=metric&lang=pt_br&appid=${CHAVE_API}`;
         const resposta = await fetch(url);
 
         if (!resposta.ok) {
-            throw new Error('Cidade não encontrada');
+            throw new Error(`Cidade não encontrada (${resposta.status})`);
         }
 
         const dados = await resposta.json();
-        msgErro.style.display = 'none';
+        ocultarErro();
         return dados;
-
     } catch (erro) {
-        msgErro.textContent = 'Cidade não encontrada. Verifique o nome digitado.';
-        msgErro.style.display = 'block';
+        exibirErro('Cidade não encontrada ou chave de API aguardando ativação.');
         console.error('Erro na requisição:', erro.message);
     }
 }
 
-// 6. Função assíncrona para buscar a previsão de 5 dias/3 horas (para o carrossel)
+// Busca previsão horária
 async function buscarPrevisaoHoraria(cidade) {
     try {
         const url = `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(cidade)}&units=metric&lang=pt_br&appid=${CHAVE_API}`;
@@ -63,7 +102,29 @@ async function buscarPrevisaoHoraria(cidade) {
     }
 }
 
-// 7. Função principal de busca acionada pelo usuário
+// Busca clima via Geolocalização
+async function buscarClimaPorCoordenadas(lat, lon) {
+    try {
+        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=pt_br&appid=${CHAVE_API}`;
+        const resposta = await fetch(url);
+
+        if (!resposta.ok) throw new Error('Erro ao buscar localização');
+
+        const dados = await resposta.json();
+        ocultarErro();
+
+        atualizarInterface(dados);
+        buscarPrevisaoHoraria(dados.name);
+        localStorage.setItem('ultimaCidade', dados.name);
+        inputCidade.value = dados.name;
+    } catch (erro) {
+        console.error('Erro na geolocalização:', erro);
+    }
+}
+
+/* ==========================================================================
+   4. FUNÇÃO PRINCIPAL DE FLUXO
+   ========================================================================== */
 async function buscarClima() {
     const cidade = inputCidade.value.trim();
     if (cidade === '') return;
@@ -73,33 +134,32 @@ async function buscarClima() {
     if (dadosClima) {
         atualizarInterface(dadosClima);
         buscarPrevisaoHoraria(cidade);
+        localStorage.setItem('ultimaCidade', cidade);
     }
 }
 
-// 8. Escutadores de Eventos
-btnBusca.addEventListener('click', buscarClima);
-inputCidade.addEventListener('keypress', (event) => {
-    if (event.key === 'Enter') {
-        buscarClima();
-    }
-});
-
-// 9. Função para atualizar a interface com o clima atual
+/* ==========================================================================
+   5. ATUALIZAÇÃO DA INTERFACE (DOM)
+   ========================================================================== */
 function atualizarInterface(dados) {
+    // 1. Cidade e Data
     elementoCidade.textContent = `${dados.name}, ${dados.sys.country}`;
-
     const agora = new Date();
     const opcoesData = { weekday: 'long', day: 'numeric', month: 'long' };
     elementoData.textContent = agora.toLocaleDateString('pt-BR', opcoesData);
 
+    // 2. Temperatura e Descrição
     temperaturaAtual = Math.round(dados.main.temp);
     elementoTemperatura.textContent = `${temperaturaAtual}°C`;
     elementoDescricao.textContent = dados.weather[0].description;
 
+    // 3. Ícone Animado via CDN
     const codigoIcone = dados.weather[0].icon;
-    iconeClima.src = `https://openweathermap.org/img/wn/${codigoIcone}@2x.png`;
+    const iconeAnimado = mapaIconesAnimados[codigoIcone] || 'clear-day.svg';
+    iconeClima.src = `https://cdn.jsdelivr.net/gh/basmilius/weather-icons@dev/production/fill/svg/${iconeAnimado}`;
     iconeClima.alt = dados.weather[0].description;
 
+    // 4. Detalhes (Umidade, Vento, Pôr do Sol)
     elementoUmidade.innerHTML = `💧 Umidade: <strong>${dados.main.humidity}%</strong>`;
     elementoVento.innerHTML = `💨 Vento: <strong>${Math.round(dados.wind.speed * 3.6)} km/h</strong>`;
 
@@ -108,20 +168,23 @@ function atualizarInterface(dados) {
         minute: '2-digit'
     });
     elementoPorSol.innerHTML = `🌅 Pôr do Sol: <strong>${horarioPorSol}</strong>`;
-    elementoNascerLua.innerHTML = `🌙 Nascer da Lua: <strong>21:45</strong>`;
 
+    // 5. Módulos Adicionais
     atualizarTemaClima(codigoIcone);
     
-    // Atualiza o alerta com base no perfil ativo
-    const perfilAtivo = document.querySelector('.btn-perfil.active') ? document.querySelector('.btn-perfil.active').textContent.toLowerCase() : 'pet';
+    const perfilAtivo = document.querySelector('.btn-perfil.active') 
+        ? document.querySelector('.btn-perfil.active').textContent.toLowerCase() 
+        : 'pet';
     atualizarAlertaCuidados(perfilAtivo);
+    
+    atualizarCardAstronomia(dados);
 }
 
-// 10. Função para renderizar os cartões da previsão horária no carrossel
+// Renderiza a previsão das próximas horas
 function renderizarPrevisaoHoraria(listaHoras) {
-    containerHoras.innerHTML = ''; // Limpa os cartões estáticos
+    if (!containerHoras) return;
+    containerHoras.innerHTML = '';
 
-    // Pega as primeiras 6 previsões (próximas 18 horas)
     const proximasHoras = listaHoras.slice(0, 6);
 
     proximasHoras.forEach(item => {
@@ -132,16 +195,20 @@ function renderizarPrevisaoHoraria(listaHoras) {
 
         const card = document.createElement('div');
         card.classList.add('card-hora');
+        
+        const codigoIcone = item.weather[0].icon;
+        const iconeAnimado = mapaIconesAnimados[codigoIcone] || 'clear-day.svg';
+
         card.innerHTML = `
             <span>${horaFormatada}</span>
-            <img class="icone-hora" src="https://openweathermap.org/img/wn/${item.weather[0].icon}.png" alt="${item.weather[0].description}">
+            <img class="icone-hora" src="https://cdn.jsdelivr.net/gh/basmilius/weather-icons@dev/production/fill/svg/${iconeAnimado}" alt="${item.weather[0].description}">
             <strong>${Math.round(item.main.temp)}°C</strong>
         `;
         containerHoras.appendChild(card);
     });
 }
 
-// 11. Função para trocar a classe do tema dinâmico no body
+// Alterna o tema da página conforme as condições
 function atualizarTemaClima(codigoIcone) {
     document.body.className = '';
     const ehNoite = codigoIcone.endsWith('n');
@@ -157,121 +224,186 @@ function atualizarTemaClima(codigoIcone) {
     }
 }
 
-// 12. Alternância e atualização dos alertas por perfil (Pet, Bebê, Idoso)
+// Alertas por Perfil (Pet, Bebê, Idoso) com transição suave e inteligência por horário
+function atualizarAlertaCuidados(perfil) {
+    if (!cardAlerta) return;
+
+    cardAlerta.classList.add('saindo');
+
+    setTimeout(() => {
+        const horaAtual = new Date().getHours();
+        const ehNoite = horaAtual >= 18 || horaAtual < 6;
+        const ehManha = horaAtual >= 6 && horaAtual < 12;
+
+        let mensagem = '';
+
+        if (perfil.includes('pet')) {
+            if (temperaturaAtual > 28) {
+                mensagem = ehNoite 
+                    ? '🐾 <strong>Dica Pet (Noite):</strong> Temperatura alta. Prefira passeios em piso de grama.'
+                    : '🐾 <strong>Cuidado com o Pet:</strong> Asfalto quente! Evite passeios no sol forte.';
+            } else if (temperaturaAtual < 15) {
+                mensagem = ehNoite 
+                    ? '🐾 <strong>Cuidado com o Pet (Noite):</strong> Noite fria! Prepare uma caminha bem aquecida.'
+                    : '🐾 <strong>Cuidado com o Pet:</strong> Dia frio. Mantenha seu pet aquecido.';
+            } else {
+                mensagem = ehManha 
+                    ? '🐾 <strong>Dica Pet (Manhã):</strong> Horário ideal para o passeio matinal!'
+                    : '🐾 <strong>Dica Pet:</strong> Excelente clima para passeios no parque.';
+            }
+        } else if (perfil.includes('bebê') || perfil.includes('bebe')) {
+            if (temperaturaAtual > 28) {
+                mensagem = ehNoite 
+                    ? '👶 <strong>Cuidado com o Bebê (Noite):</strong> Quarto abafado? Use roupas leves para dormir.'
+                    : '👶 <strong>Cuidado com o Bebê:</strong> Calor intenso. Ofereça bastante água e prefira sombras.';
+            } else if (temperaturaAtual < 18) {
+                mensagem = ehNoite 
+                    ? '👶 <strong>Cuidado com o Bebê (Noite):</strong> Mantenha o bebê coberto confortavelmente.'
+                    : '👶 <strong>Cuidado com o Bebê:</strong> Mantenha pés e mãos bem aquecidos.';
+            } else {
+                mensagem = ehManha 
+                    ? '👶 <strong>Dica Bebê (Manhã):</strong> Momento perfeito para o banho de sol matinal!'
+                    : '👶 <strong>Dica Bebê:</strong> Temperatura ótima para passeio de carrinho.';
+            }
+        } else if (perfil.includes('idoso')) {
+            if (temperaturaAtual > 28) {
+                mensagem = ehNoite 
+                    ? '👴 <strong>Cuidado com Idosos (Noite):</strong> Mantenha água por perto durante a noite.'
+                    : '👴 <strong>Cuidado com Idosos:</strong> Evite exposição ao sol e reforce o consumo de líquidos.';
+            } else if (temperaturaAtual < 16) {
+                mensagem = ehNoite 
+                    ? '👴 <strong>Cuidado com Idosos (Noite):</strong> Proteja as articulações contra o frio noturno.'
+                    : '👴 <strong>Cuidado com Idosos:</strong> Atenção às mudanças bruscas de temperatura.';
+            } else {
+                mensagem = ehManha 
+                    ? '👴 <strong>Dica Idosos (Manhã):</strong> Excelente horário para caminhada leve.'
+                    : '👴 <strong>Dica Idosos:</strong> Clima favorável para realizar atividades diárias.';
+            }
+        }
+
+        cardAlerta.innerHTML = mensagem;
+        cardAlerta.classList.remove('saindo');
+    }, 150);
+}
+
+/* ==========================================================================
+   6. MÓDULO DE ASTRONOMIA E EVENTOS
+   ========================================================================== */
+function calcularFaseLua(data = new Date()) {
+    let ano = data.getFullYear();
+    let mes = data.getMonth() + 1;
+    let dia = data.getDate();
+
+    if (mes < 3) {
+        ano--;
+        mes += 12;
+    }
+
+    const c = 365.25 * ano;
+    const e = 30.6 * mes;
+    const jd = c + e + dia - 694039.09;
+    const ciclo = jd / 29.5305882;
+    const fase = (ciclo - Math.floor(ciclo)) * 29.53;
+
+    if (fase < 1.8456) return { nome: "🌑 Lua Nova" };
+    if (fase < 5.53699) return { nome: "🌒 Lua Crescente" };
+    if (fase < 9.22831) return { nome: "🌓 Quarto Crescente" };
+    if (fase < 12.91963) return { nome: "🌔 Crescente Gibosa" };
+    if (fase < 16.61096) return { nome: "🌕 Lua Cheia" };
+    if (fase < 20.30228) return { nome: "🌖 Minguante Gibosa" };
+    if (fase < 23.99361) return { nome: "🌗 Quarto Minguante" };
+    if (fase < 27.68493) return { nome: "🌘 Lua Minguante" };
+    return { nome: "🌑 Lua Nova" };
+}
+
+function avaliarObservacaoCeu(porcentagemNuvens) {
+    if (porcentagemNuvens <= 15) {
+        return "✨ Excelente! Céu limpo para ver constelações.";
+    } else if (porcentagemNuvens <= 50) {
+        return "🌤️ Moderada. Nuvens esparsas no céu.";
+    } else {
+        return "☁️ Ruim. Alta cobertura de nuvens.";
+    }
+}
+
+function obterProximoEvento() {
+    const hoje = new Date();
+    const mesDiaAtual = `${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
+    const eventoEncontrado = eventosAstronomicos.find(ev => ev.data >= mesDiaAtual);
+
+    if (eventoEncontrado) {
+        return `<strong>${eventoEncontrado.nome} (${eventoEncontrado.data.split('-').reverse().join('/')}):</strong> ${eventoEncontrado.desc}`;
+    } else {
+        return "Nenhum evento raro agendado para os próximos dias neste mês.";
+    }
+}
+
+function atualizarCardAstronomia(dadosClima) {
+    const lua = calcularFaseLua();
+    
+    if (elFaseLua) elFaseLua.textContent = lua.nome;
+
+    // Atualiza a Fase Lunar exibida no painel de detalhes
+    if (elementoNascerLua) elementoNascerLua.innerHTML = `🌙 Fase Lunar: <strong>${lua.nome}</strong>`;
+
+    const porcentagemNuvens = dadosClima.clouds ? dadosClima.clouds.all : 0;
+    if (elVisibilidadeCeu) elVisibilidadeCeu.textContent = avaliarObservacaoCeu(porcentagemNuvens);
+
+    if (elTextoEvento) elTextoEvento.innerHTML = obterProximoEvento();
+}
+
+/* ==========================================================================
+   7. TRATAMENTO DE ERROS E MENSAGENS
+   ========================================================================== */
+function exibirErro(mensagem) {
+    if (msgErro) {
+        msgErro.textContent = mensagem;
+        msgErro.style.display = 'block';
+    }
+}
+
+function ocultarErro() {
+    if (msgErro) {
+        msgErro.style.display = 'none';
+    }
+}
+
+/* ==========================================================================
+   8. LISTENERS E INICIALIZAÇÃO
+   ========================================================================== */
+
+// Eventos de Busca
+btnBusca.addEventListener('click', buscarClima);
+inputCidade.addEventListener('keypress', (event) => {
+    if (event.key === 'Enter') buscarClima();
+});
+
+// Geolocalização
+if (btnLocalizacao) {
+    btnLocalizacao.addEventListener('click', () => {
+        if ('geolocation' in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => buscarClimaPorCoordenadas(pos.coords.latitude, pos.coords.longitude),
+                (erro) => exibirErro('Permissão de localização negada.')
+            );
+        } else {
+            alert('Seu navegador não suporta geolocalização.');
+        }
+    });
+}
+
+// Troca de Perfil (Pet, Bebê, Idoso)
 botoesPerfil.forEach(botao => {
     botao.addEventListener('click', () => {
         botoesPerfil.forEach(b => b.classList.remove('active'));
         botao.classList.add('active');
-
-        const perfil = botao.textContent.toLowerCase();
-        atualizarAlertaCuidados(perfil);
+        atualizarAlertaCuidados(botao.textContent.toLowerCase());
     });
 });
 
-function atualizarAlertaCuidados(perfil) {
-    let mensagem = '';
-
-    if (perfil.includes('pet')) {
-        if (temperaturaAtual > 28) {
-            mensagem = '🐾 <strong>Cuidado com o Pet:</strong> O asfalto está quente! Evite passeios nos horários de pico e mantenha água fresca.';
-        } else if (temperaturaAtual < 15) {
-            mensagem = '🐾 <strong>Cuidado com o Pet:</strong> Mantenha seu pet aquecido e abrigado do vento frio.';
-        } else {
-            mensagem = '🐾 <strong>Dica Pet:</strong> Clima agradável para passeios no parque e brincadeiras ao ar livre!';
-        }
-    } else if (perfil.includes('bebê') || perfil.includes('bebe')) {
-        if (temperaturaAtual > 28) {
-            mensagem = '👶 <strong>Cuidado com o Bebê:</strong> Mantenha a hidratação reforçada e use roupas leves de algodão.';
-        } else if (temperaturaAtual < 18) {
-            mensagem = '👶 <strong>Cuidado com o Bebê:</strong> Vista o bebê com camadas de roupas confortáveis para mantê-lo aquecido.';
-        } else {
-            mensagem = '👶 <strong>Dica Bebê:</strong> Temperatura excelente para um passeio de carrinho na sombra.';
-        }
-    } else if (perfil.includes('idoso')) {
-        if (temperaturaAtual > 28) {
-            mensagem = '👴 <strong>Cuidado com Idosos:</strong> Ambiente propício para desidratação. Incentive o consumo frequente de água.';
-        } else if (temperaturaAtual < 16) {
-            mensagem = '👴 <strong>Cuidado com Idosos:</strong> Atenção às dores articulares e às mudanças bruscas de temperatura.';
-        } else {
-            mensagem = '👴 <strong>Dica Idosos:</strong> Excelente dia para caminhadas leves ao ar livre nos horários recomendados.';
-        }
-    }
-
-    cardAlerta.innerHTML = mensagem;
-}
-
-// Captura do botão de localização
-const btnLocalizacao = document.querySelector('.btn-localizacao');
-
-// Função para buscar clima usando Latitude e Longitude
-async function buscarClimaPorCoordenadas(lat, lon) {
-    try {
-        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=pt_br&appid=${CHAVE_API}`;
-        const resposta = await fetch(url);
-
-        if (!resposta.ok) throw new Error('Erro ao buscar localização');
-
-        const dados = await resposta.json();
-        
-        if (msgErro) msgErro.style.display = 'none';
-
-        atualizarInterface(dados);
-        buscarPrevisaoHoraria(dados.name);
-
-    } catch (erro) {
-        console.error('Erro na geolocalização:', erro);
-    }
-}
-
-// Função que aciona a API de geolocalização do navegador
-function obterLocalizacaoUsuario() {
-    if ('geolocation' in navigator) {
-        navigator.geolocation.getCurrentPosition(
-            (posicao) => {
-                const lat = posicao.coords.latitude;
-                const lon = posicao.coords.longitude;
-                buscarClimaPorCoordenadas(lat, lon);
-            },
-            (erro) => {
-                console.warn('Permissão de localização negada ou indisponível:', erro.message);
-                if (msgErro) {
-                    msgErro.textContent = 'Permissão de localização negada.';
-                    msgErro.style.display = 'block';
-                }
-            }
-        );
-    } else {
-        alert('Seu navegador não suporta geolocalização.');
-    }
-}
-
-// Evento de clique no botão de localização
-if (btnLocalizacao) {
-    btnLocalizacao.addEventListener('click', obterLocalizacaoUsuario);
-}
-
-async function buscarClima() {
-    const cidade = inputCidade.value.trim();
-
-    if (cidade === '') return;
-
-    const dadosClima = await buscarDadosClima(cidade);
-
-    if (dadosClima) {
-        atualizarInterface(dadosClima);
-        buscarPrevisaoHoraria(cidade);
-        
-        // Salva a cidade no navegador do usuário
-        localStorage.setItem('ultimaCidade', cidade);
-    }
-}
-
-// Executado automaticamente ao carregar a página
+// Inicialização Automática
 document.addEventListener('DOMContentLoaded', () => {
-    // Busca a cidade salva no localStorage ou usa 'São Paulo' como padrão
     const cidadeSalva = localStorage.getItem('ultimaCidade') || 'São Paulo';
-    
-    // Preenche o input com o nome da cidade e realiza a busca
     inputCidade.value = cidadeSalva;
     buscarClima();
 });

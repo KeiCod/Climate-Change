@@ -199,6 +199,33 @@ header input::placeholder{
     background: rgba(255, 255, 255, 0.35);
 }
 
+.card-astronomia {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 16px;
+    margin-top: 15px;
+    font-size: 0.85rem;
+}
+
+.card-astronomia h2 {
+    font-size: 0.95rem;
+    margin-bottom: 10px;
+}
+
+.proximo-evento {
+    margin-top: 10px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    border-left: 3px solid #6dd5fa;
+}
+
+.icone-clima {
+    width: 90px;
+    height: 90px;
+    object-fit: contain;
+    filter: drop-shadow(0px 4px 8px rgba(0, 0, 0, 0.2));
+}
 
 /* ==========================================================================
    TEMAS DINÂMICOS DO CLIMA (Aplicados no <body> via JS)
